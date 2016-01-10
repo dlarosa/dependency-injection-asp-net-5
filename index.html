@@ -1,0 +1,153 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Dependency Injection in ASP.NET 5 by dlarosa</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">Dependency Injection in ASP.NET 5</h1>
+        <p class="header">How to implement dependency injection in your ASP.NET 5 project</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/dlarosa/dependency-injection-asp-net-5/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/dlarosa/dependency-injection-asp-net-5/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/dlarosa/dependency-injection-asp-net-5">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/dlarosa">dlarosa</a></p>
+
+
+      </header>
+      <section>
+        <p>Dependency injection is at the heart of ASP.NET 5. Much has been written about it since last year, but in this demo I would like to provide a simple example of how to use dependency injection to inject a service in an ASP.NET 5 Controller.</p>
+
+<p>To achieve this, we will create an ASP.NET 5 application that displays the weather forecast. This application will be able to use two different services: WeatherService, which uses <a href="https://www.nuget.org/packages/WeatherNet/" title="WeatherNet">WeatherNet</a> to provide real weather forecast, and WeatherService2, which as you will see later, it is not a very reliable forecast provider.</p>
+
+<p>Later in the demo, I will demonstrate how easy it is to modify our application and switch between these two services. Let’s get to it.</p>
+
+<h3>
+<a id="creating-the-service" class="anchor" href="#creating-the-service" aria-hidden="true"><span class="octicon octicon-link"></span></a>Creating the service</h3>
+
+<p>The first thing we need to do is to create an interface that our services can implement. This interface will only have one method, which will provide the weather forecast based on a location.</p>
+
+<div class="highlight highlight-source-cs"><pre>
+<span class="pl-k">public</span> <span class="pl-k">interface</span> <span class="pl-en">IWeatherService</span>
+{
+    <span class="pl-k">string</span> <span class="pl-en">GetWeather</span>(<span class="pl-k">string</span> <span class="pl-smi">city</span>, <span class="pl-k">string</span> <span class="pl-smi">country</span>);
+}</pre></div>
+
+<p>Once we have the interface, we create a new class that will contain the service implementation. This service we will retrieve and return the weather forecast using WeatherNet, based on the city and country.</p>
+
+<div class="highlight highlight-source-cs"><pre><span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">WeatherService</span> :<span class="pl-k">IWeatherService</span>
+{
+
+    <span class="pl-k">public</span> <span class="pl-k">string</span> <span class="pl-en">GetWeather</span>(<span class="pl-k">string</span> <span class="pl-smi">city</span>, <span class="pl-k">string</span> <span class="pl-smi">country</span>)
+    {
+        <span class="pl-k">var</span> wClient = <span class="pl-k">new</span> WeatherNet.Clients.CurrentWeather();
+        <span class="pl-k">var</span> weather = wClient.GetByCityName(city, country).Item.Description;
+
+        <span class="pl-k">return</span> <span class="pl-k">string</span>.Format(<span class="pl-s"><span class="pl-pds">"</span>WeatherService <span class="pl-cce">\n\n</span>{0} in {1} ({2})<span class="pl-pds">"</span></span>, weather, city, country);
+    }
+}</pre></div>
+
+<p>Now, we add the WeatherService2 implementation in a new class. This service will not retrieve the weather using any third party. Instead, it will make the assumption that there is heavy snow everywhere. A little bit scary, right? ;)</p>
+
+<div class="highlight highlight-source-cs"><pre><span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">WeatherService2</span> : <span class="pl-k">IWeatherService</span>
+{
+
+    <span class="pl-k">public</span> <span class="pl-k">string</span> <span class="pl-en">GetWeather</span>(<span class="pl-k">string</span> <span class="pl-smi">city</span>, <span class="pl-k">string</span> <span class="pl-smi">country</span>)
+    {
+        <span class="pl-k">var</span> weather = <span class="pl-s"><span class="pl-pds">"</span>Heavy Snow<span class="pl-pds">"</span></span>;
+
+        <span class="pl-k">return</span> <span class="pl-k">string</span>.Format(<span class="pl-s"><span class="pl-pds">"</span>WeatherService2 <span class="pl-cce">\n\n</span>{0} in {1} ({2})<span class="pl-pds">"</span></span>, weather, city, country);
+    }
+}</pre></div>
+
+<p>In our sample application, I put the three classes in three different files under a Service folder created in the root folder.</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/dlarosa/dependency-injection-asp-net-5/master/images/1.PNG?raw=true" alt="">
+ </p>
+
+<h3>
+<a id="injecting-the-service-into-the-controller" class="anchor" href="#injecting-the-service-into-the-controller" aria-hidden="true"><span class="octicon octicon-link"></span></a>Injecting the service into the controller</h3>
+
+<p>It's time to inject the service to our Controller. To do this, we create a Controller constructor, which is going to take an IWeatherService implementation as a parameter. We also create a private field so that it's available to the rest of the methods of the Controller.</p>
+
+<div class="highlight highlight-source-cs"><pre>IWeatherService _weatherService;
+<span class="pl-k">public</span> HomeController(IWeatherService weatherService)
+{
+     _weatherService = weatherService;
+}</pre></div>
+
+<p>Now we want to use the injected service in the Index method of our Controller to return the weather forecast. To keep it simple, the parameters will be hard coded in this method.</p>
+
+<div class="highlight highlight-source-cs"><pre>[HttpGet(<span class="pl-s"><span class="pl-pds">"</span>/<span class="pl-pds">"</span></span>)]
+<span class="pl-k">public</span> <span class="pl-k">string</span> Index()
+{
+    <span class="pl-k">return</span> _weatherService.GetWeather(<span class="pl-s"><span class="pl-pds">"</span>Miami<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>US<span class="pl-pds">"</span></span>);
+}</pre></div>
+
+<h3>
+<a id="registering-the-service" class="anchor" href="#registering-the-service" aria-hidden="true"><span class="octicon octicon-link"></span></a>Registering the service</h3>
+
+<p>Now let's do some magic and use the new dependency injection feature that comes with ASP.NET 5.</p>
+
+<p>In the Startup.cs file we have a ConfigureService method, which we need to add the following line to register our service in the application:</p>
+
+<div class="highlight highlight-source-cs"><pre><span class="pl-k">public</span> <span class="pl-k">void</span> ConfigureServices(IServiceCollection services)
+{
+    services.AddMvc();
+    services.AddInstance&lt;IWeatherService&gt;(<span class="pl-k">new</span> WeatherService());
+}</pre></div>
+
+<p>This line means that every time our app needs an instance of IWeatherService, the WeatherService implementation will be used. </p>
+
+<p>Notice that we have used the AddInstance method to register our service, this is going to provide the same service instance for each HTTP request that uses the service. </p>
+
+<p>However in some cases we may want to create a new instance every time that the service is used. In this case, we can use something like the AddTransient method, which will provide a new instance of the service every time it's needed:</p>
+
+<div class="highlight highlight-source-cs"><pre>services.AddTransient&lt;IWeatherService&gt;(x=&gt; <span class="pl-k">new</span> WeatherService());</pre></div>
+
+<h3>
+<a id="running-the-application" class="anchor" href="#running-the-application" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running the application!</h3>
+
+<p>We now run our application and observe how, as expected, the sky is clear in Miami. This seems right to me, and means that our WeatherService implementation was used.</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/dlarosa/dependency-injection-asp-net-5/master/images/2.PNG?raw=true" alt="">
+ </p>
+
+<p>If, for any reason, we want to use WeatherService2, we just need to modify the ConfigureServices method.</p>
+
+<div class="highlight highlight-source-cs"><pre><span class="pl-k">public</span> <span class="pl-k">void</span> ConfigureServices(IServiceCollection services)
+{
+      services.AddMvc();
+      services.AddInstance&lt;IWeatherService&gt;(<span class="pl-k">new</span> WeatherService2());
+}</pre></div>
+
+<p>Let's run our application again, and voilà. Heavy snow in Miami, which means that this time our application used the WeatherService2 implementation.</p>
+
+<p></p><p align="center">
+  <img src="https://raw.githubusercontent.com/dlarosa/dependency-injection-asp-net-5/master/images/3.PNG?raw=true" alt="">
+ </p>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		
+  </body>
+</html>

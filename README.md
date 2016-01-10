@@ -54,7 +54,7 @@ public class WeatherService2 : IWeatherService
 In our sample application, I put the three classes in three different files under a Service folder created in the root folder.
 
 <p align="center">
-  <img src="/readme_images/1.PNG?raw=true" alt=""/>
+  <img src="/images/1.PNG?raw=true" alt=""/>
  </p>
 
 ###Injecting the service into the controller
@@ -116,7 +116,7 @@ We now run our application and observe how, as expected, the sky is clear in Mia
 
 
 <p align="center">
-  <img src="/readme_images/2.PNG?raw=true" alt=""/>
+  <img src="/images/2.PNG?raw=true" alt=""/>
  </p>
 
 
@@ -133,12 +133,11 @@ public void ConfigureServices(IServiceCollection services)
 Let's run our application again, and voilà. Heavy snow in Miami, which means that this time our application used the WeatherService2 implementation.
 
  <p align="center">
-  <img src="/readme_images/3.PNG?raw=true" alt=""/>
+  <img src="/images/3.PNG?raw=true" alt=""/>
  </p>
 
 
-[Project Source Code](https://github.com/dlarosa/dependency-injection-asp-net-5/tree/master/src "Project Source Code")
+[Source Code](https://github.com/dlarosa/dependency-injection-asp-net-5/tree/master/src "Source Code")
 
----
-Miguel De La Rosa
+
 

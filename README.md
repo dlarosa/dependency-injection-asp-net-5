@@ -137,7 +137,6 @@ Let's run our application again, and voilà. Heavy snow in Miami, which means th
  </p>
 
 
-[Source Code](https://github.com/dlarosa/dependency-injection-asp-net-5/tree/master/src "Source Code")
 
 
 

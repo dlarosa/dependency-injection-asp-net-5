@@ -1,11 +1,10 @@
 # Dependency Injection in ASP.NET 5
 
+Simple example of how to use dependency injection to inject a service in an ASP.NET 5 Controller.
 
-Dependency injection is at the heart of ASP.NET 5. Much has been written about it since last year, but in this demo I would like to provide a simple example of how to use dependency injection to inject a service in an ASP.NET 5 Controller.
+###Introduction
 
-To achieve this, we will create an ASP.NET 5 application that displays the weather forecast. This application will be able to use two different services: WeatherService, which uses [WeatherNet](https://www.nuget.org/packages/WeatherNet/ "WeatherNet") to provide real weather forecast, and WeatherService2, which as you will see later, it is not a very reliable forecast provider.
-
-Later in the demo, I will demonstrate how easy it is to modify our application and switch between these two services. Let’s get to it.
+The following lines show how to use dependency injection in an ASP.NET 5 application that displays the weather forecast. The application will be able to use two different services: WeatherService, which uses [WeatherNet](https://www.nuget.org/packages/WeatherNet/ "WeatherNet") to provide real weather forecast, and WeatherService2, which as you will see later, it is not a very reliable forecast provider. 
 
 ###Creating the service
 
